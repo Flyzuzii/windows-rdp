@@ -1,35 +1,33 @@
 name: rdp
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: windows-2022
+
     steps:
-        - name: Download & auth ngrok
-      run: |
-        Invoke-WebRequest -Uri https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip -OutFile ngrok.zip
-        Expand-Archive ngrok.zip -DestinationPath $env:USERPROFILE\ngrok
-        cd $env:USERPROFILE\ngrok
-        .\ngrok.exe authtoken $env:NGROK_AUTH_TOKEN
-      env:
-        NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+      - name: Download & auth ngrok
+        run: |
+          Invoke-WebRequest -Uri https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip -OutFile ngrok.zip
+          Expand-Archive ngrok.zip -DestinationPath $env:USERPROFILE\ngrok
+          cd $env:USERPROFILE\ngrok
+          .\ngrok.exe authtoken $env:NGROK_AUTH_TOKEN
+        env:
+          NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
 
+      - name: Enable RDP + buat user
+        run: |
+          net user Fauzi 123456 /add
+          net localgroup administrators Fauzi /add
+          reg add "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
+          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
 
-    - name: Enable RDP + buat user
-      run: |
-        net user Fauzi 123456 /add
-        net localgroup administrators Fauzi /add
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
-        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+      - name: Start ngrok TCP 3389
+        run: Start-Process -NoNewWindow -FilePath $env:USERPROFILE\ngrok\ngrok.exe -ArgumentList "tcp 3389"
 
-    - name: Start ngrok TCP 3389
-      run: Start-Process -NoNewWindow -FilePath $env:USERPROFILE\ngrok\ngrok.exe -ArgumentList "tcp 3389"
-
-    - name: Tampilkan info koneksi (Summary)
-      run: |
-        sleep 20
-        Invoke-WebRequest -UseBasicParsing http://127.0.0.1:4040/api/tunnels | ConvertFrom-Json | % tunnels | % public_url
-
-    - name: Keep alive (6h)
-      run: ping -n 21600 127.0.0.1 >nul
+      - name: Tampilkan info koneksi (Summary)
+        run: |
+          sleep 20
+          Invoke-WebRequest -UseBasicParsing http://127.0.0.1:4040/api/tunnels | ConvertFrom-Json | % tunnels | % public_url
