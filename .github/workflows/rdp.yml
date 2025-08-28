@@ -9,8 +9,9 @@ jobs:
     - name: Download & auth ngrok
       run: |
         Invoke-WebRequest -Uri https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip -OutFile ngrok.zip
-        Expand-Archive ngrok.zip
-        ./ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
+        Expand-Archive ngrok.zip -DestinationPath $env:USERPROFILE\ngrok
+        cd $env:USERPROFILE\ngrok
+        .\ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
 
     - name: Enable RDP + buat user
       run: |
@@ -20,7 +21,7 @@ jobs:
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
 
     - name: Start ngrok TCP 3389
-      run: Start-Process -NoNewWindow -FilePath ./ngrok.exe -ArgumentList "tcp 3389"
+      run: Start-Process -NoNewWindow -FilePath $env:USERPROFILE\ngrok\ngrok.exe -ArgumentList "tcp 3389"
 
     - name: Tampilkan info koneksi (Summary)
       run: |
