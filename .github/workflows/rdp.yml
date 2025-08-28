@@ -10,7 +10,8 @@ jobs:
     steps:
     - name: Set RDP user
       run: |
-        net user Fauzi "Fauzi@2025" /add
+        net user Fauzi "F@uZ!2025abc
+        " /add
         net localgroup administrators Fauzi /add
 
     - name: Download Cloudflared
