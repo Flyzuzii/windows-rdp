@@ -12,7 +12,7 @@ jobs:
       run: |
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-        net user Fauzi Fauzii321) /add
+        net user Fauzi Fauzii321 /add
         net localgroup administrators Fauzi /add
 
     - name: Show IP
@@ -20,5 +20,5 @@ jobs:
         echo "Your RDP IP:"
         ipconfig
         echo "Username: Fauzi"
-        echo "Password: Fauzii321)"
+        echo "Password: Fauzii321"
         
