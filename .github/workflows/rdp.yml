@@ -1,56 +1,31 @@
-name: Windows RDP (ngrok)
+name: rdp
 
-on:
-  workflow_dispatch:
+on: workflow_dispatch
 
 jobs:
-  rdp:
-    runs-on: windows-latest
-    timeout-minutes: 360   # max 6 jam
-
+  build:
+    runs-on: windows-2022
     steps:
-      - name: Download & auth ngrok
-        shell: powershell
-        env:
-          NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }}
-        run: |
-          Invoke-WebRequest -Uri https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
-          Expand-Archive ngrok.zip -DestinationPath $env:USERPROFILE\ngrok | Out-Null
-          $ngrok="$env:USERPROFILE\ngrok\ngrok.exe"
-          & $ngrok config add-authtoken $env:NGROK_TOKEN
+    - name: Download & auth ngrok
+      run: |
+        Invoke-WebRequest -Uri https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip -OutFile ngrok.zip
+        Expand-Archive ngrok.zip
+        ./ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
 
-      - name: Enable RDP + buat user
-        shell: powershell
-        run: |
-          $User = "Fauzi"
-          $Pass = "Fauzi@2025_RDP!"   # kuat (huruf besar/kecil+angka+simbol)
-          net user $User "$Pass" /add
-          net localgroup administrators $User /add
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name 'fDenyTSConnections' -Value 0
-          Enable-NetFirewallRule -DisplayGroup 'Remote Desktop'
-          # NLA tetap on (lebih aman)
-          Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name 'UserAuthentication' -Value 1
+    - name: Enable RDP + buat user
+      run: |
+        net user Fauzi 123456 /add
+        net localgroup administrators Fauzi /add
+        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
 
-      - name: Start ngrok TCP 3389
-        shell: powershell
-        run: |
-          $ngrok="$env:USERPROFILE\ngrok\ngrok.exe"
-          Start-Process -FilePath $ngrok -ArgumentList "tcp 3389 --log=stdout" -RedirectStandardOutput "$env:USERPROFILE\ngrok\ngrok.log"
-          Start-Sleep -Seconds 8
+    - name: Start ngrok TCP 3389
+      run: Start-Process -NoNewWindow -FilePath ./ngrok.exe -ArgumentList "tcp 3389"
 
-      - name: Tampilkan info koneksi (Summary)
-        shell: powershell
-        run: |
-          $log="$env:USERPROFILE\ngrok\ngrok.log"
-          $line = Get-Content $log | Select-String -Pattern "url=tcp://"
-          if (-not $line) { Start-Sleep -Seconds 5; $line = Get-Content $log | Select-String -Pattern "url=tcp://" }
-          $tcp = ($line[-1].ToString() -split "url=")[-1].Trim()
-          "## ✅ Windows RDP siap"                  | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
-          "**Host:Port**: $tcp"                     | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
-          "**Username**: Fauzi"                     | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
-          "**Password**: Fauzi@2025_RDP!"           | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
-          Write-Host "Connect with RD Client to: $tcp (user Fauzi)"
+    - name: Tampilkan info koneksi (Summary)
+      run: |
+        sleep 20
+        Invoke-WebRequest -UseBasicParsing http://127.0.0.1:4040/api/tunnels | ConvertFrom-Json | % tunnels | % public_url
 
-      - name: Keep alive (6h)
-        shell: powershell
-        run: Start-Sleep -Seconds 21600
+    - name: Keep alive (6h)
+      run: ping -n 21600 127.0.0.1 >nul
