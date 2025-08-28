@@ -1,0 +1,24 @@
+name: Windows RDP
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Enable RDP
+      run: |
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        net user Fauzi 123456 /add
+        net localgroup administrators Fauzi /add
+
+    - name: Show IP
+      run: |
+        echo "Your RDP IP:"
+        ipconfig
+        echo "Username: Fauzi"
+        echo "Password: 123456"
+        
