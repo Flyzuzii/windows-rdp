@@ -6,19 +6,17 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-
     steps:
-    - name: Enable RDP
-      run: |
-        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
-        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-        net user Fauzi Fauzii321 /add
-        net localgroup administrators Fauzi /add
+      - name: Enable RDP and Create User
+        run: |
+          # Buat user Fauzi dengan password kuat
+          net user Fauzi "Fauzi@123" /add
+          net localgroup administrators Fauzi /add
 
-    - name: Show IP
-      run: |
-        echo "Your RDP IP:"
-        ipconfig
-        echo "Username: Fauzi"
-        echo "Password: Fauzii321"
-        
+          # Aktifkan RDP
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+
+      - name: Show IP
+        run: |
+          ipconfig
