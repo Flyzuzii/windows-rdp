@@ -1,26 +1,20 @@
-name: RDP
+name: RDP Free Cloudflare
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: windows-2022
+
     steps:
-      - name: Download Cloudflared
-        run: |
-          Invoke-WebRequest -Uri https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe -OutFile cloudflared.exe
+    - name: Set RDP user
+      run: |
+        net user Fauzi "Fauzi@2025" /add
+        net localgroup administrators Fauzi /add
 
-      - name: Enable RDP + buat user
-        run: |
-          net user Fauzi P@ssw0rd123 /add
-          net localgroup administrators Fauzi /add
-          reg add "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
-          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+    - name: Download Cloudflared
+      run: Invoke-WebRequest -Uri https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe -OutFile cloudflared.exe
 
-      - name: Start Cloudflare Tunnel (TCP 3389)
-        run: Start-Process -NoNewWindow -FilePath .\cloudflared.exe -ArgumentList "tunnel --url rdp://localhost:3389"
-
-      - name: Tampilkan info koneksi
-        run: |
-          Start-Sleep -Seconds 15
-          Invoke-WebRequest -UseBasicParsing http://127.0.0.1:4040/api/tunnels | ConvertFrom-Json | % tunnels | % public_url
+    - name: Start Cloudflare Tunnel (TCP 3389)
+      run: .\cloudflared.exe tunnel --url tcp://localhost:3389
