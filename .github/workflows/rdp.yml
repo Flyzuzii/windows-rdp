@@ -10,13 +10,18 @@ jobs:
       - name: Enable RDP and Create User
         run: |
           # Buat user Fauzi dengan password kuat
-          net user Fauzi "Fauzi@123" /add
+          net user Fauzi "Fauzi@12345!" /add
           net localgroup administrators Fauzi /add
 
           # Aktifkan RDP
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
 
-      - name: Show IP
+      - name: Show IP, User & Pass
         run: |
+          echo "=============================="
+          echo "RDP AKSES BERHASIL!"
+          echo "Username: Fauzi"
+          echo "Password: Fauzi@12345!"
+          echo "=============================="
           ipconfig
